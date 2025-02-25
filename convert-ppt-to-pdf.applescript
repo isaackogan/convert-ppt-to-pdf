@@ -1,35 +1,43 @@
 on run {input, parameters}
     set theOutput to {}
-    -- set logFile to (POSIX path of (path to desktop folder)) & "conversion_log.txt" -- for logging
-    -- do shell script "echo 'Starting conversion...' > " & logFile -- for logging
-
-    tell application "Microsoft PowerPoint" -- work on version 15.15 or newer
+    
+    repeat with i in input
+        set t to i as string
+        
+        if not (t ends with ".ppt" or t ends with ".pptx") then
+            set fileName to (do shell script "basename " & quoted form of (POSIX path of t))
+display alert "Invalid File" message "The file '" & fileName & "' is not a PowerPoint (.ppt or .pptx) file. Exiting script."
+            return
+        end if
+    end repeat
+    
+    tell application "Microsoft PowerPoint"
         launch
+        
         repeat with i in input
             set t to i as string
-            -- do shell script "echo 'Processing: " & t & "' >> " & logFile -- for logging
-            if t ends with ".ppt" or t ends with ".pptx" then
-                set pdfPath to my makeNewPath(i)
-                -- do shell script "echo 'Saving to: " & pdfPath & "' >> " & logFile -- for logging
-                try
-                    open i
-                    set activePres to active presentation
-                    -- Export the active presentation to PDF
-                    save activePres in (POSIX file pdfPath) as save as PDF
-                    close active presentation saving no
-                    set end of theOutput to pdfPath
-                    -- Log the path to the console
-                    -- do shell script "echo 'Saved PDF to: " & pdfPath & "' >> " & logFile -- for logging
-                on error errMsg
-                    -- do shell script "echo 'Error: " & errMsg & "' >> " & logFile -- for logging
-                end try
-            end if
+            set pdfPath to my makeNewPath(i)
+            
+            try
+                open i
+                set activePres to active presentation
+                
+                save activePres in (POSIX file pdfPath) as save as PDF
+                close active presentation saving no
+                set end of theOutput to pdfPath
+            on error errMsg
+                set fileName to (do shell script "basename " & quoted form of (POSIX path of t))
+display alert "Error" message "Failed to convert '" & fileName & "': " & errMsg
+                return
+            end try
         end repeat
+        
     end tell
-    tell application "Microsoft PowerPoint" -- work on version 15.15 or newer
+    
+    tell application "Microsoft PowerPoint"
         quit
     end tell
-    -- do shell script "echo 'Conversion completed.' >> " & logFile -- for logging
+    
     return theOutput
 end run
 
